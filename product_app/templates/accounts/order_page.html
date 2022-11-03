@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    .card {
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+      max-width: 300px;
+      margin: auto;
+      text-align: center;
+      font-family: arial;
+    }
+
+    .price {
+      color: grey;
+      font-size: 22px;
+    }
+
+    .card button {
+      border: none;
+      outline: 0;
+      padding: 12px;
+      color: white;
+      background-color: #000;
+      text-align: center;
+      cursor: pointer;
+      width: 100%;
+      font-size: 18px;
+    }
+
+    .card button:hover {
+      opacity: 0.7;
+    }
+
+
+    img {
+      height: 250px;
+      width: 250px;
+    }
+
+    #left {
+      text-align: left;
+    }
+
+    #center {
+      text-align: center;
+    }
+
+    #right {
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+  <h2 style="text-align:center">Order Page</h2>
+  <div class="card">
+    {% for i in cart_list %}
+
+    <img src="{{ i.product.image.url }}" style="max-height:200px">
+    <h1>{{ i.product.title }}</h1>
+    <h1>{{ i.product.price }}</h1>
+    <h3>{{ i.created_at }}</h3>
+
+    <form action="{% url 'product_app:removeorder'  %}" method="POST">
+      {% csrf_token %}
+      <input type="submit" value="Cancel Order">
+      <input type="hidden" name="id" value="{{i.id}}">
+      {{ i.id }}
+      <h4>Quantity: {{ i.quantity }}</h4>
+      <h4>Stauts: {{ i.status }}</h4>
+    </form>
+    {% endfor %}
+    <h1>Total : {{ my_total }}</h1>
+    Tax : {{ tax }}
+    <h1>Your Price : {{ total_price }}</h1> 
+    <h1>{{message}}</h1>
+</body>
+</div>
+
+
+</html>

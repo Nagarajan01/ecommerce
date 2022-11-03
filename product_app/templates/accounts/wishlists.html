@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!------ Include the above in your HEAD tag ---------->
+
+    <style>
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            margin: auto;
+            text-align: center;
+            font-family: arial;
+        }
+
+        .price {
+            color: grey;
+            font-size: 22px;
+        }
+
+        .card button {
+            border: none;
+            outline: 0;
+            padding: 12px;
+            color: white;
+            background-color: #000;
+            text-align: center;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+        }
+
+        .card button:hover {
+            opacity: 0.7;
+        }
+
+        a:link,
+        a:visited {
+            background-color: #f44336;
+            color: white;
+            padding: 14px 25px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        a:hover,
+        a:active {
+            background-color: red;
+        }
+
+        h1 {
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="cart-wrap">
+        <center>
+            <div class="navbar-header">
+                <b><a class="navbar-brand" href="#">My Wishlist</h1> </a></b>
+            </div>
+        </center>
+        <br>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+
+
+
+                    <thead>
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                            <tr>
+                                <th width="50%">Product Name</th>
+                                <th width="25%">Unit Price</th>
+                                <th >Stock Status</th>
+                            </tr>
+                        </table>
+                    </thead>
+                    <hr>
+
+                    {% for i in object_list %}
+                    <tbody>
+                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                            <tr>
+                                <td width="2%" class="price">
+                                    {{ i.title }}
+                                </td>
+                                <td width="10%">
+                                    <div class="display-flex align-center">
+                                        <div class="img-product">
+                                            <img src="{{ i.image.url }} " alt="" class="mCS_img_loaded" width="500"
+                                                height="600">
+                                        </div>
+                                    </div>
+                                </td>
+                                <td width="20%" class="price">
+                                    {% if i.discount_price is not None %}
+                                    <p>Offer_price: ${{ i.discount_price }}</p>
+                                    {% else %}
+                                    <p>M.R.P.: ${{ i.price }}</p>
+                                    {% endif %}
+                                </td>
+                                <td width="10%"><span class="in-stock-box">
+                                        {% if i.in_stock == True %}
+                                        <p>{{ i.in_stock }}</p>
+                                        {% else %}
+                                        <p>{{ i.in_stock }}</p>
+                                        {% endif %}
+                                    </span></td>
+                                <td width="15%">
+                                    <form action="{% url 'product_app:add_to_cart' i.id %}" method="post">
+                                        {{ cart_product_form }}
+                                        {% csrf_token %}
+                                        {% if i.in_stock == True %}
+                                        <input type="submit" value="Add to cart">
+                                        {% else %}                                        
+                                        <input type="submit" value="Out of Stock" disabled>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                        </table>
+                        </tr>
+                        <hr>
+
+                    </tbody>
+
+                    {% endfor %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</body>

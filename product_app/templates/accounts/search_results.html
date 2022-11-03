@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <style>
+    .card {
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+      max-width: 300px;
+      margin: auto;
+      text-align: center;
+      font-family: arial;
+    }
+
+    .price {
+      color: grey;
+      font-size: 22px;
+    }
+
+
+    .card button {
+      border: none;
+      outline: 0;
+      padding: 12px;
+      color: white;
+      background-color: #000;
+      text-align: center;
+      cursor: pointer;
+      width: 100%;
+      font-size: 18px;
+    }
+
+
+    .card button:hover {
+      opacity: 0.7;
+    }
+
+
+    img {
+      height: 250px;
+      width: 250px;
+    }
+
+    #left {
+      text-align: left;
+    }
+
+    #center {
+      text-align: center;
+    }
+
+    #right {
+      text-align: right;
+    }
+
+    .icons {
+      display: flex;
+      margin-left: 89%;
+      margin-top: 20px;
+    }
+
+    .icons img {
+      margin-right: 5px;
+    }
+
+    .icons img:hover {
+      transform: scale(1.2);
+      transition: transform .5s
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="navbar navbar-default">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <b><a class="navbar-brand" href="#">Ecommerce</a></b>
+      </div>
+      <ul class="nav navbar-nav">
+        <li class="active"><a href="http://127.0.0.1:8000/home">Home</a></li>
+        <li><a href="http://127.0.0.1:8000/lists/">List Page</a></li>
+        <li><a href="http://127.0.0.1:8000/order_view/">Your Orders</a></li>
+        <li>
+          <form action="http://127.0.0.1:8000/home" method="get" style="margin-top:9px">
+            <label for="your_name">Search: </label>
+            <input id="your_name" type="text" name="your_name">
+            <input type="submit" value="OK" class="btn btn-primary">
+          </form>
+        </li>
+      </ul>
+      <div class="icons" style="margin-top:10px;margin-bottom:1px;">
+        <div id="right">
+          <a href="http://127.0.0.1:8000/view_cart/"><img
+              src="https://www.freeiconspng.com/thumbs/cart-icon/basket-cart-icon-27.png" alt="cartpng"
+              style="width:45px;height:45px;margin-top:2px"></a>
+        </div>
+        <div id="right">
+          <a href="http://127.0.0.1:8000/view_wishlist/"><img
+              src="https://cdn4.iconfinder.com/data/icons/e-commerce-572/24/E-commerce_expanded-49-512.png"
+              alt="wishpng" style="width:40px;height:40px;margin-top:5px"></a>
+        </div>
+        <div id="right">
+          <a href="http://127.0.0.1:8000/logout/"><img
+              src="https://w7.pngwing.com/pngs/475/85/png-transparent-computer-icons-logout-angle-text-black-thumbnail.png"
+              alt="wishpng" style="width:30px;height:30px;margin-top:10px"></a>
+        </div>
+
+
+      </div>
+
+
+
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <div class="card">
+      {% for i in object_list %}
+      <div id="right">
+        {% if i.id not in my_list %}
+        <form action="{% url 'product_app:wishlist' i.id %}" method="post">
+          {{ cart_product_form }}
+          {% csrf_token %}
+          <input type="image"
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Heart-SG2001-transparent.png/1200px-Heart-SG2001-transparent.png"
+            alt="wishlistpng" style="width:30px;height:30px;margin-right:15px;margin-top: 10px;">
+        </form>
+        {% else %}
+        <form action="{% url 'product_app:removewishlist' i.id %}" method="post">
+          {{ cart_product_form }}
+          {% csrf_token %}
+          <input type="image"
+            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-TkeUj-QsSZaj3NhdAE37tiQPPUY2IvizZg&usqp=CAU"
+            style="width:40px;height:40px;margin-right:15px;margin-top: 10px;">
+        </form>
+
+        {% endif %}
+
+      </div>
+      <img src="{{ i.image.url }}" style="max-height:200px">
+      <h1>{{ i.title }}</h1>
+      {% if i.discount_price is not None %}
+      <p>Offer_price: ${{ i.discount_price }} <br> M.R.P.: ${{ i.price }}</p>
+      {% else %}
+      <p>M.R.P.: ${{ i.price }}</p>
+
+      {% endif %}
+      <input type="hidden" value="{{i.id}}">
+      <form action="{% url 'product_app:add_to_cart' i.id %}" method="post">
+        {{ cart_product_form }}
+        {% csrf_token %}
+        <button>Add to Cart</button>
+      </form>
+      <hr>
+      {% endfor %}
+    </div>
+  </div>
+
+  </div>
+</body>
+
+</html>

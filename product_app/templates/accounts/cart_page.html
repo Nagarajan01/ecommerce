@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <style>
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            margin: auto;
+            text-align: center;
+            font-family: arial;
+        }
+
+        .price {
+            color: grey;
+            font-size: 22px;
+        }
+
+        .card button {
+            border: none;
+            outline: 0;
+            padding: 12px;
+            color: white;
+            background-color: #000;
+            text-align: center;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+        }
+
+
+        .card button:hover {
+            opacity: 0.7;
+        }
+
+
+        img {
+            height: 250px;
+            width: 250px;
+        }
+
+        #left {
+            text-align: left;
+        }
+
+        #center {
+            text-align: center;
+        }
+
+        #right {
+            text-align: right;
+        }
+
+        .icons {
+            display: flex;
+            margin-left: 93%;
+            margin-top: 20px;
+        }
+
+        .icons img {
+            margin-right: 5px;
+        }
+
+        .icons img:hover {
+            transform: scale(1.2);
+            transition: transform .5s
+        }
+
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            margin: auto;
+            text-align: center;
+            font-family: arial;
+        }
+
+        .price {
+            color: grey;
+            font-size: 22px;
+        }
+
+        .card button {
+            border: none;
+            outline: 0;
+            padding: 12px;
+            color: white;
+            background-color: #000;
+            text-align: center;
+            cursor: pointer;
+            width: 100%;
+            font-size: 18px;
+        }
+
+        .card button:hover {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <b><a class="navbar-brand" href="#">Ecommerce</a></b>
+            </div>
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="http://127.0.0.1:8000/home">Home</a></li>
+                <li><a href="http://127.0.0.1:8000/lists/">List Page</a></li>
+                <li><a href="http://127.0.0.1:8000/order_view/">Your Orders</a></li>
+                <li>
+                    <form action="http://127.0.0.1:8000/home" method="get" style="margin-top:12px">
+                        <label for="your_name">Search: </label>
+                        <input id="your_name" type="text" name="your_name">
+                        <input type="submit" value="OK" class="btn btn-primary">
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <h2 style="text-align:center">Cart Page</h2>
+    <div style="text-align:center">
+        {% for i in form %}
+        {{ i.as_p }}
+
+        <img src="{{ i.image.url }}" style="max-height:200px">
+        <h1>{{ i.title }}</h1>
+        <!--{% if i.discount_price is not None %} -->
+        <p>Offer_price: ${{ i.discount_price }}</p>
+        <!-- {% else %} -->
+        <p>M.R.P.: ${{ i.price }}</p>
+        <!-- {% endif %} -->
+        {{i.total}}
+        <input type="hidden" value="{{i.id}}">
+        <form action="{% url 'product_app:updatecart'  %}" method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="id" value="{{i.id}}">
+            <input type="hidden" name="price" value="{{i.price}}">
+            Quantity
+            <input type="number" id="quantity" name="quantity" value="{{i.quantity}}" min="1" max="15">
+            <input type="submit">
+            <hr>
+        </form>
+        {% endfor %}
+        <br>
+        <!-- <input type="submit" value="order">-->
+        <a href="http://127.0.0.1:8000/order_results/"><button>order item</button></a>
+        <hr>
+    </div>
+
+</body>
+
+</html>

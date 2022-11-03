@@ -1,0 +1,20 @@
+<center>
+    <h1>Product Details</h1>
+    <table BORDER=10 width=10cm>
+        <tr>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Discount_price</th>
+            <th>Image</th>
+            <th>In_stock</th>
+        </tr>
+        {% for i in form %}
+        <tr>
+            <td>{{i.title}}</td>
+            <td>{{i.price}}</td>
+            <td>{{i.discount_price}}</td>
+            <td><img src="{{ i.image.url }}" style="max-height:300px"></td>
+            <td>{{i.in_stock}}</td>
+        </tr>
+        {% endfor %}
+    </table>
