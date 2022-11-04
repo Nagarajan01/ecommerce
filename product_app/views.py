@@ -12,6 +12,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
 from django.db import transaction
 from django.db.models import F, Sum
+import json
 
 
 def loginPage(request):
@@ -63,6 +64,23 @@ class Lists(ListView):
         return context
 
 
+
+from datetime import date 
+import datetime
+class listjson(ListView):
+    model = Item  
+    def render_to_response(self, context, *args, **kwargs):
+        detail_Mark_json = Item.objects.all().values()
+        a = []
+        for i in detail_Mark_json:
+            x = date.today() 
+            y = x.strftime("%d, %B, %Y")       
+            i["date"] = y
+            a.append(i)
+        data = json.dumps(a, default=str, indent=1)
+        print(type(data))
+        return HttpResponse(data, content_type='application/json')
+
 @login_required
 class index(ListView):
     template_name = "accounts/index.html"
@@ -76,10 +94,32 @@ def add_to_cart(request, **kwargs):
     if 'discount_price' != 'null':
         mytprice = CartItem.objects.annotate(
             price=Sum(F('product__discount_price')*F('quantity'))).values()
-    mytprice = CartItem.objects.annotate(
-        price=Sum(F('product__price')*F('quantity'))).values()
+    mytprice = CartItem.objects.annotate(price=Sum(F('product__price')*F('quantity'))).values()
     ncart.save()
-    return redirect('product_app:view_cart')
+    mylist = []     
+    for i in mytprice:
+        mylist.append(i)
+    data = json.dumps(mylist, default=str, indent=1)
+    print(type(data))
+    return HttpResponse(data, content_type='application/json')
+
+
+from datetime import date 
+import datetime
+class view_cart_json(ListView):
+
+    model = CartItem
+    def render_to_response(self, context, *args, **kwargs):
+
+        ob = CartItem.objects.filter(
+            user=self.request.user, ordered=False).order_by('product__title').values('product_id', 'quantity')
+        mylist = []     
+        for i in ob:
+            ob_p = Item.objects.filter(id=i['product_id'])
+            mylist.append(ob_p[0])
+        data = json.dumps(mylist, default=str, indent=1)
+        print(type(data))
+        return HttpResponse(data, content_type='application/json')
 
 
 class view_cart(ListView):
@@ -97,9 +137,10 @@ class view_cart(ListView):
         return mylist
 
 
+
+
 @login_required(login_url='accounts/login/')
 def cart_update(request):
-
     product_id = request.POST.get('id')
     product_price = request.POST.get('price')
     product_quantity = request.POST.get('quantity')
@@ -130,23 +171,36 @@ def order_results(request):
 @login_required(login_url='accounts/login/')
 def order_view(request):
     template = "accounts/order_page.html"
-    cart_list = CartItem.objects.filter(user=request.user, ordered = True)
+    cart_list = CartItem.objects.filter(user=request.user, ordered = True).values()
     my_total = CartItem.objects.filter(Q(user=request.user) & Q(ordered=True)).exclude(status='Failed').aggregate(Sum('total'))['total__sum']
+    mylist = []     
+    for i in cart_list:
+        mylist.append(i)
     if my_total is None:
             new_cart_list = CartItem.objects.filter(user=request.user, ordered = True)
             new_total = 0
             new_price = new_total
             new_tax = 18/100 * new_price
             total_price = new_price + new_tax
-            context = {'cart_list': new_cart_list, 'my_total': new_price, 'tax': new_tax, 'total_price':total_price}
-            return render(request, template, context)
+            
+            context = {'cart_list': mylist, 'my_total': new_price, 'tax': new_tax, 'total_price':total_price}
+            #return render(request, template, context)
+
+            data = json.dumps(context, default=str, indent=1)
+            print(type(data))
+            return HttpResponse(data, content_type='application/json')
     price = my_total
     if price is None:
         return render(request, "accounts/order_page.html", {"message": "You have no orders"})
     new_tax = 18/100 * price
     total_price = price + new_tax
-    context = {'cart_list': cart_list, 'my_total': price, 'tax': new_tax, 'total_price':int(total_price)}
-    return render(request, template, context)
+
+    context = {'cart_list': mylist, 'my_total': price, 'tax': new_tax, 'total_price':int(total_price)}
+    #return render(request, template, context)
+
+    data = json.dumps(context, default=str, indent=1)
+    print(type(data))
+    return HttpResponse(data, content_type='application/json')
 
 
 @login_required(login_url='accounts/login/')
@@ -155,14 +209,19 @@ def get_queryset(request):
     query = request.GET.get('your_name')
     if query is not None:
         form = Item.objects.filter((Q(brand__brand__icontains=query) | Q(
-            title__icontains=query)) & Q(in_stock=True))
+            title__icontains=query)) & Q(in_stock=True)).values()
+        mylist = []
+        for i in form:
+            mylist.append(i)
         ob = Wishlist.objects.all().values('wished_item_id')
         my_list = []
         for i, index in enumerate(list(ob)):
             my_list.append(index['wished_item_id'])
-        print(my_list)
-        context = {'object_list': form, 'my_list': my_list}
-        return render(request, template_name, context)
+        context = {'object_list': mylist, 'favorites': my_list}
+
+        data = json.dumps(context, default=str, indent=1)
+        print(type(data))
+        return HttpResponse(data, content_type="application/json")
     else:
         form = Item.objects.filter(in_stock=True)
         ob = Wishlist.objects.all().values('wished_item_id')
@@ -171,6 +230,10 @@ def get_queryset(request):
             my_list.append(index['wished_item_id'])
         context = {'object_list': form, 'my_list': my_list}
         return render(request, template_name, context)
+'''
+        data = json.dumps(context, default=str, indent=1)
+        print(type(data))
+        return HttpResponse(data, content_type="application/json")'''
 
 
 @login_required(login_url='accounts/login/')
