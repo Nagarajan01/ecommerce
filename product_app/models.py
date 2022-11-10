@@ -77,5 +77,3 @@ class Payment_Detail(models.Model):
     transaction_id = models.CharField(max_length=30, null=True, blank=True)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     payment_status = models.CharField(max_length=500, null=True, blank=True)
-
-#  > output be like {'Payment_Status': 'Payment complete.', 'Charge_id': 'ch_3M1vtnSAnvLl9E2S1JH6KXF4'}
