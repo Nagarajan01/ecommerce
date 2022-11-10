@@ -1,18 +1,96 @@
 from django.db.models import Q
-from django.shortcuts import HttpResponse
-#from http.client import HTTPResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, CreateView
-from .models import *
+from django.shortcuts import render, redirect, HttpResponse
+from django.views.generic import ListView, CreateView, TemplateView
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.forms import UserCreationForm
-from django.db import transaction
 from django.db.models import F, Sum
+from django.views import View
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponse
+
+from django.conf import settings
+
+from .models import *
 import json
+import stripe
+from django.core.mail import send_mail
+
+stripe.api_key = settings.STRIPE_PRIVATE_KEY
+
+class SuccessView(TemplateView):
+    template_name = "accounts/success.html"
+
+class CancelView(TemplateView):
+    template_name = "accounts/success.html"
+
+def checkout(request):
+    order = Order.objects.filter(user=request.user).last()
+    order_items = order.items.all()
+    prices =[]
+
+    for item in order_items:
+        product = stripe.Product.create(
+            name=item.product.title, description=item.product.title, 
+            images = [])
+        price = stripe.Price.create(product=product.id, unit_amount=int(
+            item.product.price + int(18/100 * item.product.price))*100, currency='inr')
+        prices.append(price.id)
+
+    line_items=[]
+    for item, price in zip(order_items,prices):
+            line_items.append({'price':price,'quantity':item.quantity}),
+    session = stripe.checkout.Session.create(
+    payment_method_types=['card'],
+    line_items=line_items,
+    metadata={
+        'order':order.id
+    },
+    mode='payment',
+    success_url='http://127.0.0.1:8000/success/',
+    cancel_url='http://127.0.0.1:8000/cancel/'
+    )
+    return redirect(session.url)
+
+global mydict1
+mylist1 = []
+mylist2 = []
+mylist3 = []
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    mypayload = request.body.decode("utf-8")
+    a = json.loads(payload)  #>>> in this variable, I can render three type("charge.succeeded", "checkout.session.completed", "payment_intent.succeeded")
+    if a['type']=="charge.succeeded": 
+        b = a["data"]["object"]["outcome"]["seller_message"]
+        c = a["data"]["object"]["id"]
+        mylist1.append(b)
+        mylist1.append(c)
+    
+    if a['type']=="checkout.session.completed":
+        c = a['data']['object']['metadata']['order']
+        mylist2.append(c)
+
+    if len(mylist1)==2 and len(mylist2)==1:
+        ['Payment complete.', 'ch_3M2BLtSAnvLl9E2S107SmFNO']
+        ['42']
+        if mylist1[0] =="Payment complete.":
+            Payment_Detail.objects.get_or_create(
+            transaction_id = mylist1[1], order=Order.objects.get(id = int(mylist2[0])), payment_status= mylist1[0])
+    if a['type']=='charge.failed':
+        b = a["data"]["object"]["outcome"]["seller_message"]
+        c = a["data"]["object"]["id"]
+        mylist3.append(b)
+        mylist3.append(c)
+        print(mylist2)
+        print(mylist3)
+        ob = Order.objects.all().values('id').last()
+        Payment_Detail.objects.get_or_create(
+        transaction_id = mylist3[1], order=Order.objects.get(id = int(ob['id'])), payment_status= b)
+    return HttpResponse(status=200)
+    
 
 
 def loginPage(request):
@@ -74,8 +152,10 @@ class listjson(ListView):
         a = []
         for i in detail_Mark_json:
             x = date.today() 
-            y = x.strftime("%d, %B, %Y")       
-            i["date"] = y
+            y = x.strftime("%d, %B, %Y")    
+            z = y.split(", ")
+            z[1] = z[1][0:3]
+            i["date"] = x
             a.append(i)
         data = json.dumps(a, default=str, indent=1)
         print(type(data))
@@ -137,8 +217,6 @@ class view_cart(ListView):
         return mylist
 
 
-
-
 @login_required(login_url='accounts/login/')
 def cart_update(request):
     product_id = request.POST.get('id')
@@ -171,36 +249,36 @@ def order_results(request):
 @login_required(login_url='accounts/login/')
 def order_view(request):
     template = "accounts/order_page.html"
-    cart_list = CartItem.objects.filter(user=request.user, ordered = True).values()
+    cart_list = CartItem.objects.filter(user=request.user)
+    order_list = Order.objects.all().values().last()
     my_total = CartItem.objects.filter(Q(user=request.user) & Q(ordered=True)).exclude(status='Failed').aggregate(Sum('total'))['total__sum']
     mylist = []     
-    for i in cart_list:
-        mylist.append(i)
+    '''for i in cart_list:
+        mylist.append(i)'''
     if my_total is None:
             new_cart_list = CartItem.objects.filter(user=request.user, ordered = True)
             new_total = 0
             new_price = new_total
             new_tax = 18/100 * new_price
             total_price = new_price + new_tax
-            
-            context = {'cart_list': mylist, 'my_total': new_price, 'tax': new_tax, 'total_price':total_price}
-            #return render(request, template, context)
-
-            data = json.dumps(context, default=str, indent=1)
-            print(type(data))
-            return HttpResponse(data, content_type='application/json')
-    price = my_total
+            context = {'cart_list': cart_list, 'my_total': new_price, 'tax': new_tax, 'total_price':total_price, 'product':order_list}
+            return render(request, template, context)            
+    price = my_total 
     if price is None:
         return render(request, "accounts/order_page.html", {"message": "You have no orders"})
-    new_tax = 18/100 * price
+    new_tax = 18/100 * price    
     total_price = price + new_tax
-
-    context = {'cart_list': mylist, 'my_total': price, 'tax': new_tax, 'total_price':int(total_price)}
-    #return render(request, template, context)
-
+    context = {'cart_list': cart_list, 'my_total': price, 'tax': new_tax, 'total_price':int(total_price), 'order':order_list}
+    return render(request, template, context)
+    
+'''
+            data = json.dumps(context, default=str, indent=1)
+            print(type(data))
+            return HttpResponse(data, content_type='application/json')'''
+'''
     data = json.dumps(context, default=str, indent=1)
     print(type(data))
-    return HttpResponse(data, content_type='application/json')
+    return HttpResponse(data, content_type='application/json')'''
 
 
 @login_required(login_url='accounts/login/')
@@ -247,7 +325,6 @@ def add_to_wishlist(request, **kwargs):
 @login_required(login_url='accounts/login/')
 def removewishlist(request, **kwargs):
     query = Item.objects.get(id=kwargs['id'])
-    print(query)
     created = Wishlist.objects.filter(
         user=request.user, wished_item=query).delete()
     return redirect('product_app:SearchResultsView')
@@ -275,3 +352,141 @@ class view_wishlist(ListView):
             ob_p = Item.objects.filter(id=i['wished_item'])
             mylist.append(ob_p[0])
         return mylist
+
+
+"""
+stripe.api_key = settings.STRIPE_PRIVATE_KEY
+
+class SuccessView(TemplateView):
+    template_name = "success.html"
+
+class CancelView(TemplateView):
+    template_name = "success.html"
+
+class ProductLandingPageView(TemplateView):
+    template_name = "accounts/landing.html"
+
+    def get_context_data(self, **kwargs):
+
+        product = Order.objects.all().values().last()
+        context = super(ProductLandingPageView, self).get_context_data(**kwargs)
+        context.update({
+            "product": product,
+            "STRIPE_PUBLIC_KEY": settings.STRIPE_PUBLIC_KEY
+        })
+        return context
+
+
+class CreateCheckoutSessionView(View):
+    def post(self, request, *args, **kwargs):
+        product_id = self.kwargs["pk"]
+        YOUR_DOMAIN = "http://127.0.0.1:8000"
+        
+        order = Order.objects.get(id=product_id)
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'description':"payment", 
+                        'currency': 'inr',
+                        'unit_amount': order.total,
+                        'product_data': {
+                            'name': order.user_id,
+                        },
+                    },
+                    'quantity': 1,
+                },
+            ],
+            metadata={
+                "product_id": order.id
+            },
+            mode='payment',
+            success_url=YOUR_DOMAIN + '/success/',
+            cancel_url=YOUR_DOMAIN + '/cancel/',
+        )
+        '''return JsonResponse({
+            'id': checkout_session.id
+        })'''
+        return redirect(checkout_session.url)
+
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return HttpResponse(status=400)
+
+    # Handle the checkout.session.completed event
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+
+        customer_email = session["customer_details"]["email"]
+        product_id = session["metadata"]["product_id"]
+
+        product = Product.objects.get(id=product_id)
+        """"""
+        send_mail(
+            subject="Here is your product",
+            message=f"Thanks for your purchase. Here is the product you ordered. The URL is {product.url}",
+            recipient_list=[customer_email],
+            from_email="matt@test.com"
+        )
+
+        # TODO - decide whether you want to send the file or the URL
+    
+    elif event["type"] == "payment_intent.succeeded":
+        intent = event['data']['object']
+
+        stripe_customer_id = intent["customer"]
+        stripe_customer = stripe.Customer.retrieve(stripe_customer_id)
+
+        customer_email = stripe_customer['email']
+        product_id = intent["metadata"]["product_id"]
+
+        product = Product.objects.get(id=product_id)
+
+        send_mail(
+            subject="Here is your product",
+            message=f"Thanks for your purchase. Here is the product you ordered. The URL is {product.url}",
+            recipient_list=[customer_email],
+            from_email="matt@test.com"
+        )
+
+    return HttpResponse(status=200)
+
+
+class StripeIntentView(View):
+    def post(self, request, *args, **kwargs):
+        try:
+            req_json = json.loads(request.body)
+            customer = stripe.Customer.create(email=req_json['email'])
+            product_id = self.kwargs["pk"]
+            product = Order.objects.get(id=product_id)
+            intent = stripe.PaymentIntent.create(
+                description = product.items.title,
+                amount=product.total,
+                currency='inr',
+                customer=customer['id'],
+                metadata={
+                    "product_id": product.id
+                }
+            )
+            return JsonResponse({
+                'clientSecret': intent['client_secret']
+            })
+        except Exception as e:
+            return JsonResponse({ 'error': str(e) })
+        """

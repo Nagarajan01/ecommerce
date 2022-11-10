@@ -25,7 +25,7 @@ admin.site.register(CartItem, My_cart)
 
 class Myorder(admin.ModelAdmin):
     list_display = (
-        'user', 'start_date', 'total')
+        'user', 'id', 'start_date', 'total')
 
 
 admin.site.register(Order, Myorder)
@@ -37,3 +37,6 @@ class MyWishlist(admin.ModelAdmin):
 
 
 admin.site.register(Wishlist, MyWishlist)
+
+
+admin.site.register(Payment_Detail)

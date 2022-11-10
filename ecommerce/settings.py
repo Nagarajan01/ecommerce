@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'product_app',
+    'product_app', 
 ]
 
 MIDDLEWARE = [
@@ -139,3 +139,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_ROOT = os.path.join(PROJECT_DIR, 'static')
 STATIC_URL = '/static/'
+
+STRIPE_PRIVATE_KEY = 'sk_test_51M1NsnSAnvLl9E2SHvIVRVE0gBKJc8eyuAXDDPbn8qbFMKG0k34EVZrnm8vvXUO1uFDH6xPIADhzcIbCgvKOYbu200nWg1exdY'
+STRIPE_PUBLIC_KEY = 'pk_test_51M1NsnSAnvLl9E2Sfv5RAHr6JschZ66VW4DujwhVQD8lkHWQoa940cLtlnYi4HBRTGH9gWQMY0dosawWQJVtih5O00o7sEc6CX'

@@ -49,6 +49,36 @@
     #right {
       text-align: right;
     }
+
+    a {
+      display: inline-block;
+      min-width: 10px;
+      padding: 5px 3px;
+      margin: 2rem;
+      font-family: sans-serif;
+      font-size: medium;
+      font-weight: bold;
+      text-decoration: none;
+      text-transform: uppercase;
+      color: #555555;
+      border: 1px solid #a1a1a1;
+      border-radius: 15px;
+      background: linear-gradient(#eeeeee, #aaaaaa);
+      box-shadow: 0px 0px 7px 3px #555555, 0px 0px 0px 10px #dddddd, 0px 0px 0px 12px white, 0px 0px 0px 14px #999999;
+      text-shadow: 0px 0px 3px #eeeeee;
+    }
+
+    a:before {
+      padding-right: 3px;
+      content: "★";
+      color: #999999;
+    }
+
+    a:after {
+      padding-left: 53x;
+      content: "★";
+      color: #999999;
+    }
   </style>
 </head>
 
@@ -66,17 +96,21 @@
       {% csrf_token %}
       <input type="submit" value="Cancel Order">
       <input type="hidden" name="id" value="{{i.id}}">
-      {{ i.id }}
       <h4>Quantity: {{ i.quantity }}</h4>
       <h4>Stauts: {{ i.status }}</h4>
     </form>
     {% endfor %}
     <h1>Total : {{ my_total }}</h1>
     Tax : {{ tax }}
-    <h1>Your Price : {{ total_price }}</h1> 
-    <h1>{{message}}</h1>
+    <h1>Your Price : {{ total_price }}</h1>
+    <br>
+
+    <!-- do not change the markup -->
+    <a href="http://127.0.0.1:8000/checkout/">
+      Checkout
+    </a>
+    <hr>
 </body>
 </div>
-
 
 </html>

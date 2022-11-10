@@ -56,6 +56,7 @@ class Order(models.Model):
     items = models.ManyToManyField(CartItem)
     start_date = models.DateTimeField(auto_now_add=True)
     total = models.IntegerField(default=0)
+    
 
     def __str__(self):
         return self.user.username
@@ -70,3 +71,11 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return self.wished_item.title
+ 
+class Payment_Detail(models.Model):
+    create_time = models.DateField(auto_now=True)
+    transaction_id = models.CharField(max_length=30, null=True, blank=True)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    payment_status = models.CharField(max_length=500, null=True, blank=True)
+
+#  > output be like {'Payment_Status': 'Payment complete.', 'Charge_id': 'ch_3M1vtnSAnvLl9E2S1JH6KXF4'}
